@@ -238,3 +238,76 @@ git push -u origin chore/setup-tooling
 - `src/app.ts`
 - `src/server.ts`
 - `src/routes/index.ts`
+
+## Banco de dados (Prisma + PostgreSQL)
+
+### Variáveis de ambiente
+
+Crie um `.env` com:
+
+```env
+PORT=3001
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/tasks
+JWT_SECRET=seu_jwt_secret
+```
+
+### Passo a passo do Prisma
+
+1. Instalar dependencias:
+
+```bash
+npm i @prisma/client @prisma/adapter-pg pg
+npm i -D prisma dotenv
+```
+
+2. Inicializar Prisma (caso ainda nao exista pasta `prisma/`):
+
+```bash
+npx prisma init
+```
+
+3. Configurar o datasource no `prisma/schema.prisma`:
+
+```prisma
+datasource db {
+  provider = "postgresql"
+}
+```
+
+4. Garantir a configuracao no `prisma.config.ts`:
+
+```ts
+import 'dotenv/config';
+import { defineConfig } from 'prisma/config';
+
+export default defineConfig({
+  schema: 'prisma/schema.prisma',
+  migrations: {
+    path: 'prisma/migrations',
+  },
+  datasource: {
+    url: process.env['DATABASE_URL'],
+  },
+});
+```
+
+5. Se o banco `tasks` nao existir, criar manualmente:
+
+```bash
+psql -h localhost -U postgres -d postgres -c "CREATE DATABASE tasks;"
+```
+
+6. Validar conexao e gerar client:
+
+```bash
+npx prisma db pull
+npx prisma generate
+```
+
+7. Fluxo de migracao (quando comecar os models):
+
+```bash
+npx prisma migrate dev --name init
+```
+
+Se `npx prisma db pull` retornar `P1003`, significa que o banco definido em `DATABASE_URL` ainda nao existe.
