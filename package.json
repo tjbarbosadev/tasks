@@ -9,9 +9,9 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "prepare": "husky",
-    "prisma:pull": "set -a; source .env; set +a; npx prisma db pull",
-    "prisma:generate": "set -a; source .env; set +a; npx prisma generate",
-    "prisma:migrate": "set -a; source .env; set +a; npx prisma migrate dev"
+    "prisma:pull": "set -a; . ./.env; set +a; npx prisma db pull",
+    "prisma:generate": "set -a; . ./.env; set +a; npx prisma generate",
+    "prisma:migrate": "set -a; . ./.env; set +a; npx prisma migrate dev"
   },
   "repository": {
     "type": "git",
