@@ -6,5 +6,7 @@
     "target": "esnext",
     "esModuleInterop": true,
     "strict": true
-  }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["build", "node_modules", "prisma.config.ts"]
 }
