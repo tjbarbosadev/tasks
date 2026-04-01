@@ -14,4 +14,21 @@ export default defineConfig([
     ignores: ['build/**', 'dist/**', 'node_modules/**'],
   },
   tseslint.configs.recommended,
+  {
+    files: ['**/*.{ts,mts,cts}'],
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          args: 'all',
+          argsIgnorePattern: '^_',
+          caughtErrors: 'all',
+          caughtErrorsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          ignoreRestSiblings: true,
+        },
+      ],
+    },
+  },
 ]);
