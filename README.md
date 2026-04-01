@@ -69,4 +69,5 @@ Siga o passo a passo em **[docs/SETUP.md](docs/SETUP.md)** (seções 1 em diante
 ## Documentação
 
 - **[docs/SETUP.md](docs/SETUP.md)** — clone vs greenfield, tooling, Prisma (models, migrate, generate), hooks Git, API CRUD de usuários.
+- **[docs/database-diagram.md](docs/database-diagram.md)** — diagrama ER (Mermaid; renderiza no GitHub/GitLab).
 - Scripts e dependências citados nos docs devem bater com o **`package.json`**; em dúvida, use o arquivo na raiz como referência.
