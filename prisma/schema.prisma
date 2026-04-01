@@ -15,7 +15,7 @@ model User {
   role         UserRole      @default(member)
   createdAt    DateTime      @default(now()) @map("created_at")
   updatedAt    DateTime      @updatedAt @map("updated_at")
-  asignedTasks Task[]        @relation("UserAssignedTasks")
+  assignedTasks Task[]       @relation("UserAssignedTasks")
   taskChanges  TaskHistory[] @relation("UserTaskChanges")
   teamMembers  TeamMember[]
 

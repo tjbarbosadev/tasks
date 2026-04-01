@@ -8,6 +8,8 @@
     "build": "tsc",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
     "prepare": "husky",
     "prisma:pull": "set -a; . ./.env; set +a; npx prisma db pull",
     "prisma:generate": "set -a; . ./.env; set +a; npx prisma generate",
