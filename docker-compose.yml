@@ -7,3 +7,14 @@ services:
       POSTGRESQL_USERNAME: postgres
       POSTGRESQL_PASSWORD: postgres
       POSTGRESQL_DATABASE: tasks
+  api:
+    build: .
+    container_name: tasks-api
+    ports:
+      - '3001:3001'
+    environment:
+      PORT: 3001
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/tasks
+      JWT_SECRET: sua_chave
+    depends_on:
+      - postgres
