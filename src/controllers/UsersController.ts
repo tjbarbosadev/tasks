@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { prisma } from '../database/prisma';
 import z from 'zod';
 import { hash } from 'bcrypt';
+import { AppError } from '../utils/AppError';
 
 class UsersController {
   public async index(_req: Request, res: Response) {
@@ -21,7 +22,7 @@ class UsersController {
     // check if user already exists
     const userExists = await prisma.user.findUnique({ where: { email } });
     if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
+      throw new AppError('User already exists', 409);
     }
 
     const hashedPassword = await hash(password, 10);
@@ -58,7 +59,7 @@ class UsersController {
     const user = await prisma.user.findUnique({ where: { id } });
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      throw new AppError('User not found', 404);
     }
 
     const updatedUser = await prisma.user.update({
@@ -89,7 +90,7 @@ class UsersController {
     const user = await prisma.user.findUnique({ where: { id } });
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      throw new AppError('User not found', 404);
     }
 
     await prisma.user.delete({ where: { id } });
