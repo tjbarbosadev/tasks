@@ -7,7 +7,7 @@ import { AppError } from '../utils/AppError';
 class UsersController {
   public async index(_req: Request, res: Response) {
     const users = await prisma.user.findMany();
-    return res.json({ message: 'UsersController index', data: users });
+    return res.json({ users });
   }
 
   public async create(req: Request, res: Response) {
