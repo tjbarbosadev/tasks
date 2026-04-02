@@ -6,11 +6,19 @@ import { verifyUserAuthorization } from '../middlewares/verifyUserAuthorization'
 const usersRoutes = Router();
 const usersController = new UsersController();
 
-usersRoutes.use(ensureAuthenticated, verifyUserAuthorization(['admin']));
-
 usersRoutes.get('/', usersController.index);
 usersRoutes.post('/', usersController.create);
-usersRoutes.patch('/:id', usersController.update);
-usersRoutes.delete('/:id', usersController.delete);
+usersRoutes.patch(
+  '/:id',
+  ensureAuthenticated,
+  verifyUserAuthorization(['admin']),
+  usersController.update,
+);
+usersRoutes.delete(
+  '/:id',
+  ensureAuthenticated,
+  verifyUserAuthorization(['admin']),
+  usersController.delete,
+);
 
 export { usersRoutes };
