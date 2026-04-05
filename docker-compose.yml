@@ -7,14 +7,19 @@ services:
       POSTGRESQL_USERNAME: postgres
       POSTGRESQL_PASSWORD: postgres
       POSTGRESQL_DATABASE: tasks
+    volumes:
+      - postgres_data:/bitnami/postgresql
   api:
     build: .
     container_name: tasks-api
     ports:
-      - '3001:3001'
+      - '3333:3333'
     environment:
-      PORT: 3001
+      PORT: 3333
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/tasks
-      JWT_SECRET: sua_chave
+      JWT_SECRET: ${JWT_SECRET}
     depends_on:
       - postgres
+
+volumes:
+  postgres_data:
