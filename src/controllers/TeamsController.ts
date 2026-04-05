@@ -96,7 +96,7 @@ class TeamsController {
 
     await prisma.team.delete({ where: { id } });
 
-    return res.json({ message: 'Team deleted successfully' });
+    return res.status(204).json({ message: 'Team deleted successfully' });
   }
 }
 

@@ -115,7 +115,7 @@ class TeamMembersController {
       throw new AppError('Team member not found', 404);
     }
 
-    return res.json({
+    return res.status(204).json({
       message: `Membro removido - time: ${team.name}, membro: ${user.name}`,
     });
   }
