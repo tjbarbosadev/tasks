@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx watch --include \"src/**/*.ts\" --env-file .env src/server.ts",
     "build": "tsc",
+    "start": "node build/server.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier . --write",

@@ -76,9 +76,7 @@ class TasksController {
       },
     });
 
-    return res.json({
-      data: task,
-    });
+    return res.status(201).json({ task });
   }
 
   async show(req: Request, res: Response) {
@@ -149,7 +147,7 @@ class TasksController {
       },
     });
 
-    return res.json({ task: updatedTask });
+    return res.status(201).json({ task: updatedTask });
   }
 
   async delete(_req: Request, res: Response) {
@@ -171,7 +169,7 @@ class TasksController {
       where: { id },
     });
 
-    return res.json({ message: 'Task deleted successfully', task });
+    return res.status(201).json({ message: 'Task deleted successfully', task });
   }
 
   async history(req: Request, res: Response) {
@@ -198,7 +196,7 @@ class TasksController {
       orderBy: { changedAt: 'desc' },
     });
 
-    return res.json({ taskId, history });
+    return res.status(201).json({ taskId, history });
   }
 }
 

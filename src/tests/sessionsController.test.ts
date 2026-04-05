@@ -34,7 +34,7 @@ describe('SessionsController', () => {
       password: plainPassword,
     });
 
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(201);
     expect(res.body).toHaveProperty('token');
     expect(typeof res.body.token).toBe('string');
     expect(res.body.token.length).toBeGreaterThan(0);

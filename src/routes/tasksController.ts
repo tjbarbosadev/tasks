@@ -19,7 +19,7 @@ tasksRoutes.get(
 tasksRoutes.get(
   '/:id',
   verifyUserAuthorization(['admin']),
-  tasksController.index,
+  tasksController.show,
 );
 tasksRoutes.post(
   '/',
