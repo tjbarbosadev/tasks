@@ -15,7 +15,7 @@ model User {
   role         UserRole      @default(member)
   createdAt    DateTime      @default(now()) @map("created_at")
   updatedAt    DateTime      @updatedAt @map("updated_at")
-  assignedTasks Task[]       @relation("UserAssignedTasks")
+  assignedTasks Tasks[]       @relation("UserAssignedTasks")
   taskChanges  TaskHistory[] @relation("UserTaskChanges")
   teamMembers  TeamMember[]
 
@@ -28,7 +28,7 @@ model Team {
   description String?
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @updatedAt @map("updated_at")
-  tasks       Task[]
+  tasks       Tasks[]
   teamMembers TeamMember[]
 
   @@map("teams")
@@ -46,7 +46,7 @@ model TeamMember {
   @@map("team_members")
 }
 
-model Task {
+model Tasks {
   id          Int           @id @default(autoincrement())
   title       String        @db.VarChar(200)
   description String?
@@ -71,7 +71,7 @@ model TaskHistory {
   newStatus TaskStatus @map("new_status")
   changedAt DateTime   @default(now()) @map("changed_at")
   user      User       @relation("UserTaskChanges", fields: [changedBy], references: [id])
-  task      Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  task      Tasks      @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
   @@map("tasks_history")
 }
