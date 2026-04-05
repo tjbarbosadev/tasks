@@ -6,7 +6,8 @@ import { AppError } from '../utils/AppError';
 
 class UsersController {
   public async index(_req: Request, res: Response) {
-    const users = await prisma.user.findMany();
+    const rows = await prisma.user.findMany();
+    const users = rows.map(({ password: _p, ...user }) => user);
     return res.json({ users });
   }
 
