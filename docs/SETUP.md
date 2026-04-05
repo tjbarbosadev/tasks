@@ -19,6 +19,16 @@ As seções **1–8** são um **histórico reproduzível** de `npm init` até ho
 
 ---
 
+## Produção (Render)
+
+A API pode estar hospedada no **Render** com PostgreSQL gerenciado. Documentação canônica de **URL pública**, **health check**, **variáveis de ambiente** (`DATABASE_URL`, `JWT_SECRET`, `PORT`), e **comandos de build/start** no painel está no **[README.md](../README.md)** na raiz do repositório.
+
+- Exemplo de health em produção: [https://tasks-j6ie.onrender.com/health](https://tasks-j6ie.onrender.com/health)
+
+Para desenvolvimento local, continue com o checklist abaixo e o restante deste arquivo.
+
+---
+
 ## Checklist: após clonar o repositório
 
 1. **Node LTS** e **Git** instalados.

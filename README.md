@@ -2,32 +2,66 @@
 
 API REST em **Node.js**, **Express 5**, **TypeScript** e **Prisma** (PostgreSQL), com validação **Zod**, autenticação **JWT** e testes de integração com **Jest** e **Supertest**.
 
+## Deploy (produção)
+
+| Ambiente   | URL base                                                           | Health check                                                              |
+| ---------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| **Render** | [https://tasks-j6ie.onrender.com](https://tasks-j6ie.onrender.com) | [GET /health](https://tasks-j6ie.onrender.com/health) → `{"status":"OK"}` |
+
+A API pública responde nessa URL após o Web Service no Render estar **Live**. O primeiro acesso após inatividade pode levar alguns segundos (cold start do plano gratuito).
+
+### Render — referência de configuração
+
+1. **PostgreSQL** no Render com database (ex.: `tasks`).
+2. **Web Service** (Node) ligado ao repositório GitHub, com variáveis de ambiente:
+   - **`DATABASE_URL`** — _Internal Database URL_ do Postgres (mesma região que o serviço).
+   - **`JWT_SECRET`** — segredo forte (só no painel do Render, nunca no Git).
+   - **`NODE_ENV`** — `production` (recomendado).
+   - **`PORT`** — definido automaticamente pelo Render; a aplicação usa `process.env.PORT` em `src/server.ts`.
+
+3. **Build Command** (exemplo):
+
+   ```bash
+   npm install && npx prisma generate && npm run build
+   ```
+
+4. **Start Command** (exemplo — aplica migrations e sobe o servidor):
+
+   ```bash
+   npx prisma migrate deploy && npm start
+   ```
+
+Se `npx prisma` falhar no start (CLI ausente após prune de dependências), coloque o pacote **`prisma`** em `dependencies` no `package.json` ou ajuste o comando conforme a documentação do Render.
+
+---
+
 ## O que o projeto cobre
 
-- **Autenticação:** cadastro implícito via `POST /users` e sessão em `POST /sessions` (token JWT).
-- **Papéis:** `admin` e `member` (campo `role` no usuário).
-- **Times:** CRUD de equipes e gestão de membros (somente **admin**).
-- **Tarefas:** CRUD, status (`pending`, `in_progress`, `completed`), prioridade (`high`, `medium`, `low`), responsável (`assignedTo`) e time (`teamId`); histórico de mudança de status em rota dedicada.
-- **Usuários:** listagem e criação públicas; atualização e exclusão restritas a **admin**.
-- **Qualidade:** ESLint, Prettier, Husky; suíte de testes para sessões, usuários, times, membros e tarefas.
+- **Autenticação:** `POST /users` (cadastro) e `POST /sessions` (login com JWT).
+- **Papéis:** `admin` e `member` (`role` no usuário).
+- **Times:** CRUD e membros (rotas sob `/teams`, **admin**).
+- **Tarefas:** CRUD, `status` / `priority`, `assignedTo`, `teamId`; histórico de status em `GET /tasks/task/:taskId` (**admin**); listagem em `GET /tasks` (admin vê tudo, membro vê tarefas atribuídas a si); filtros opcionais `?status=` e `?priority=`.
+- **Usuários:** `GET`/`POST` `/users` sem JWT; `PATCH`/`DELETE` `/users/:id` (**admin**).
+- **Qualidade:** ESLint, Prettier, Husky; testes de integração com Supertest.
+- **Docker:** `Dockerfile` e `docker-compose.yml` para Postgres + API local (opcional).
 
-Stack adicional: **bcrypt** (senha), **Docker** (Postgres local opcional). Deploy sugerido no desafio: **Render** (configure `DATABASE_URL`, `JWT_SECRET` e build/start no painel).
+---
 
 ## Autenticação
 
-Rotas marcadas como **JWT** exigem cabeçalho:
+Rotas marcadas como **JWT** exigem:
 
 ```http
 Authorization: Bearer <token>
 ```
 
-O token é retornado por `POST /sessions` após login com `email` e `password`.
+O token vem de `POST /sessions` com `email` e `password`.
 
 ---
 
-## Rotas
+## Endpoints (documentação)
 
-Base URL local padrão: `http://localhost:3001` (veja `src/server.ts`).
+Use a base **`http://localhost:3001`** no desenvolvimento ou **`https://tasks-j6ie.onrender.com`** em produção (sem barra no final).
 
 ### Geral
 
@@ -37,12 +71,12 @@ Base URL local padrão: `http://localhost:3001` (veja `src/server.ts`).
 
 ### Usuários (`/users`)
 
-| Método   | Caminho      | Auth | Papel     | Descrição                                                                                   |
-| -------- | ------------ | ---- | --------- | ------------------------------------------------------------------------------------------- |
-| `GET`    | `/users`     | —    | —         | Lista todos os usuários (`{ users }`)                                                       |
-| `POST`   | `/users`     | —    | —         | Cria usuário (corpo: `name`, `email`, `password`, `role` opcional); resposta sem `password` |
-| `PATCH`  | `/users/:id` | JWT  | **admin** | Atualiza `name`, `email` e/ou `role`                                                        |
-| `DELETE` | `/users/:id` | JWT  | **admin** | Remove usuário                                                                              |
+| Método   | Caminho      | Auth | Papel     | Descrição                                                                            |
+| -------- | ------------ | ---- | --------- | ------------------------------------------------------------------------------------ |
+| `GET`    | `/users`     | —    | —         | Lista usuários (`{ users }`)                                                         |
+| `POST`   | `/users`     | —    | —         | Cria usuário (`name`, `email`, `password`, `role` opcional); resposta sem `password` |
+| `PATCH`  | `/users/:id` | JWT  | **admin** | Atualiza `name`, `email` e/ou `role`                                                 |
+| `DELETE` | `/users/:id` | JWT  | **admin** | Remove usuário                                                                       |
 
 ### Sessão (`/sessions`)
 
@@ -52,7 +86,7 @@ Base URL local padrão: `http://localhost:3001` (veja `src/server.ts`).
 
 ### Times (`/teams`)
 
-Todas as rotas abaixo exigem **JWT** e papel **admin**.
+Todas exigem **JWT** e papel **admin**.
 
 | Método   | Caminho                            | Descrição                                  |
 | -------- | ---------------------------------- | ------------------------------------------ |
@@ -61,100 +95,143 @@ Todas as rotas abaixo exigem **JWT** e papel **admin**.
 | `GET`    | `/teams/:id`                       | Detalhe do time                            |
 | `PATCH`  | `/teams/:id`                       | Atualiza time                              |
 | `DELETE` | `/teams/:id`                       | Remove time (204)                          |
-| `GET`    | `/teams/:teamId/members`           | Time com lista de membros (`members`)      |
-| `POST`   | `/teams/:teamId/members/:memberId` | Adiciona usuário `memberId` ao time        |
-| `DELETE` | `/teams/:teamId/members/:memberId` | Remove membro do time                      |
+| `GET`    | `/teams/:teamId/members`           | Time com membros (`members`)               |
+| `POST`   | `/teams/:teamId/members/:memberId` | Adiciona membro                            |
+| `DELETE` | `/teams/:teamId/members/:memberId` | Remove membro                              |
 
 ### Tarefas (`/tasks`)
 
-Todas as rotas exigem **JWT**.
+Todas exigem **JWT**. Criar, editar, excluir, ver detalhe e histórico estão restritos a **admin**; **membro** usa principalmente `GET /tasks` (suas tarefas).
 
-| Método   | Caminho               | Papel     | Descrição                                                                                                                       |
-| -------- | --------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `GET`    | `/tasks`              | qualquer  | **Admin:** todas as tarefas. **Membro:** só tarefas com `assignedTo` = usuário logado. Query opcional: `?status=`, `?priority=` |
-| `GET`    | `/tasks/:id`          | **admin** | Detalhe de uma tarefa (`{ task }`)                                                                                              |
-| `POST`   | `/tasks`              | **admin** | Cria tarefa: `title`, `description?`, `status`, `priority`, `assignedTo`, `teamId` → 201 `{ task }`                             |
-| `PATCH`  | `/tasks/:id`          | **admin** | Atualiza campos opcionais; se `status` mudar, registra em `tasks_history`                                                       |
-| `DELETE` | `/tasks/:id`          | **admin** | Remove tarefa                                                                                                                   |
-| `GET`    | `/tasks/task/:taskId` | **admin** | Histórico de alterações de status (`{ taskId, history }`)                                                                       |
+| Método   | Caminho               | Papel     | Descrição                                                                                     |
+| -------- | --------------------- | --------- | --------------------------------------------------------------------------------------------- |
+| `GET`    | `/tasks`              | qualquer  | Admin: todas; membro: `assignedTo` = si. Queries: `?status=`, `?priority=`                    |
+| `GET`    | `/tasks/:id`          | **admin** | Detalhe `{ task }`                                                                            |
+| `POST`   | `/tasks`              | **admin** | Cria (`title`, `description?`, `status`, `priority`, `assignedTo`, `teamId`) → 201 `{ task }` |
+| `PATCH`  | `/tasks/:id`          | **admin** | Atualiza; mudança de `status` grava em `tasks_history`                                        |
+| `DELETE` | `/tasks/:id`          | **admin** | Remove tarefa                                                                                 |
+| `GET`    | `/tasks/task/:taskId` | **admin** | Histórico `{ taskId, history }`                                                               |
 
-> A rota de histórico usa o prefixo `/tasks/task/...` para não colidir com `GET /tasks/:id`.
+> O prefixo `/tasks/task/...` evita conflito com `GET /tasks/:id`.
 
 ---
 
 ## Modelo de dados (resumo)
 
-Entidades principais no Prisma: **User**, **Team**, **TeamMember**, **Task**, **TaskHistory**. Diagrama ER: [docs/database-diagram.md](docs/database-diagram.md).
+**User**, **Team**, **TeamMember**, **Task**, **TaskHistory** (Prisma). Diagrama: [docs/database-diagram.md](docs/database-diagram.md).
 
 ---
 
-## Requisitos
+## Como rodar localmente
 
-- Node.js (LTS recomendado)
-- Docker (opcional, para PostgreSQL local)
-- Git (para clonar)
+### Requisitos
 
-## Início rápido
+- Node.js (LTS)
+- Docker (opcional, Postgres via `docker-compose`)
+- Git
 
-### A) Repositório clonado
+### Passos
 
-A pasta `src/generated/prisma` **não vai no Git** (`.gitignore`). Após `npm install`, gere o client e aplique as migrations.
+Repositório: `https://github.com/tjbarbosadev/tasks`
 
 ```bash
-git clone <url-do-repositorio> && cd tasks
+git clone https://github.com/tjbarbosadev/tasks.git && cd tasks
 npm install
 ```
 
-Crie o `.env` na raiz com `DATABASE_URL`, `JWT_SECRET` e, se quiser, `PORT` (exemplos em [docs/SETUP.md](docs/SETUP.md)).
+Crie `.env` na raiz com pelo menos `DATABASE_URL` e `JWT_SECRET` (exemplos em [docs/SETUP.md](docs/SETUP.md)).
 
-Suba o Postgres, se usar o `docker-compose` do projeto:
+Postgres local (opcional):
 
 ```bash
 docker compose up -d
 ```
 
-Migrations e Prisma Client:
+Banco e Prisma Client:
 
 ```bash
 npx prisma migrate deploy
 npm run prisma:generate
 ```
 
-Em desenvolvimento você pode usar `npm run prisma:migrate` (para **nova** migration nomeada: `npm run prisma:migrate -- --name descricao`).
-
-Suba a API:
+Desenvolvimento (hot reload):
 
 ```bash
 npm run dev
 ```
 
-- Servidor: `http://localhost:3001`
-- Health: `GET /health`
+- API: `http://localhost:3001` (ou `PORT` no `.env`)
+- Health: `GET http://localhost:3001/health`
 
-### B) Projeto novo do zero
+Build de produção local:
 
-Siga [docs/SETUP.md](docs/SETUP.md) (tooling, Express, Prisma, etc.).
+```bash
+npm run build
+npx prisma migrate deploy
+npm start
+```
+
+### Projeto novo do zero (greenfield)
+
+O passo a passo histórico completo está em [docs/SETUP.md](docs/SETUP.md).
+
+---
+
+## Testes automatizados
+
+Os testes são de **integração** (Express + Supertest + banco real via Prisma). É necessário **`.env`** válido (`DATABASE_URL`, `JWT_SECRET`) e migrations aplicadas.
+
+```bash
+npm test
+```
+
+Modo watch:
+
+```bash
+npm run test:dev
+```
+
+Suites em `src/tests/*.test.ts`: sessões, usuários, times, membros de time, tarefas.
 
 ---
 
 ## Scripts úteis
 
-| Comando                                   | Descrição                                         |
-| ----------------------------------------- | ------------------------------------------------- |
-| `npm run dev`                             | API com reload (`tsx watch` + `--env-file .env`)  |
-| `npm run build`                           | Compila TypeScript → `build/`                     |
-| `npm start`                               | Sobe a API a partir de `build/server.js`          |
-| `npm test`                                | Jest (integração, `supertest`, `--env-file=.env`) |
-| `npm run test:dev`                        | Jest em modo watch                                |
-| `npm run lint` / `npm run lint:fix`       | ESLint                                            |
-| `npm run format` / `npm run format:check` | Prettier                                          |
-| `npm run prisma:generate`                 | Gera client em `src/generated/prisma`             |
-| `npm run prisma:migrate`                  | `prisma migrate dev` (com `.env` carregado)       |
-| `npm run prisma:pull`                     | `prisma db pull`                                  |
+| Comando                                   | Descrição                                        |
+| ----------------------------------------- | ------------------------------------------------ |
+| `npm run dev`                             | API com reload (`tsx` + `--env-file .env`)       |
+| `npm run build`                           | Compila TypeScript → `build/`                    |
+| `npm start`                               | `node build/server.js` (após `build`)            |
+| `npm test` / `npm run test:dev`           | Jest + Supertest                                 |
+| `npm run lint` / `npm run lint:fix`       | ESLint                                           |
+| `npm run format` / `npm run format:check` | Prettier                                         |
+| `npm run prisma:generate`                 | Gera client em `src/generated/prisma`            |
+| `npm run prisma:migrate`                  | `prisma migrate dev` (carrega `.env` via script) |
+| `npm run prisma:pull`                     | `prisma db pull`                                 |
 
-## Documentação
+> `src/generated/prisma` está no `.gitignore`; após clone use `npm run prisma:generate` (ou o fluxo com `migrate` acima).
 
-- **[docs/SETUP.md](docs/SETUP.md)** — ambiente, Prisma, hooks Git, notas de API.
+---
+
+## Checklist (entrega / desafio)
+
+- [x] Node + TypeScript + Express
+- [x] ESLint e Prettier
+- [x] Variáveis de ambiente (local: `.env` + scripts; produção: painel Render)
+- [x] PostgreSQL + Prisma (models, migrations, relacionamentos)
+- [x] Docker (`Dockerfile`, `docker-compose`)
+- [x] Estrutura controllers / routes / middlewares
+- [x] JWT, cadastro/login, proteção de rotas, admin vs member (conforme rotas documentadas)
+- [x] CRUD times e membros; CRUD tarefas; filtros; histórico de status; Zod
+- [x] Jest + Supertest nos fluxos principais
+- [x] Deploy Render + URL pública + health OK
+- [x] README com setup local, endpoints, deploy, testes
+
+---
+
+## Documentação extra
+
+- **[docs/SETUP.md](docs/SETUP.md)** — histórico de setup, Prisma, Git hooks, erros frequentes.
 - **[docs/database-diagram.md](docs/database-diagram.md)** — diagrama ER (Mermaid).
 
-Em dúvida sobre versões de dependências ou scripts, use o **`package.json`** na raiz como referência.
+Referência de versões e scripts: **`package.json`** na raiz.
