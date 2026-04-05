@@ -1,4 +1,5 @@
 // DATABASE_URL vem do ambiente (Render, Docker, ou shell após `source .env`).
+/// <reference types="node" />
 import { defineConfig } from 'prisma/config';
 
 export default defineConfig({
